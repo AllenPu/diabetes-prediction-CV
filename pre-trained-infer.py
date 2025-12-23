@@ -4,6 +4,7 @@ import torch.nn as nn
 from torchvision import models
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
+import torch.optim as optim
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -46,6 +47,17 @@ class AverageMeter(object):
         return fmtstr.format(**self.__dict__)
     
 
+def resnet101(numClass):
+    # default file : /root/.cache/torch/hub/checkpoints/resnet101-63fe2227.pth
+    res101 = models.resnet101(pretrained=True)
+    numFit = res101.fc.in_features
+    res101.fc = nn.Sequential(nn.Linear(numFit, numClass), nn.Softmax(dim=1))
+    res101 = res101.to(device)
+    return res101
+
+
+
+    
 
 if __name__ == "__main__":
     acc_all = AverageMeter()
@@ -53,24 +65,42 @@ if __name__ == "__main__":
         transforms.Resize((224, 224)),  # 调整图像大小
         transforms.ToTensor(),           # 将图像转换为张量
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # 标准化
-        ])
-    train_dataset = datasets.ImageFolder(root='/teams/dr_1765761962/program_data/binary_data_less_50', transform=transform)
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4)
+        ])  
+    train_datasets = datasets.ImageFolder(root='/teams/dr_1765761962/program_data/binary_data_less_50', transform=transform)
+    #
+    train_size = int(0.8 * len(train_datasets))
+    test_size = len(train_datasets) - train_size
+    train_dataset, test_dataset = torch.utils.data.random_split(train_datasets, [train_size, test_size])
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, num_workers=4)
+    test_loader = DataLoader(test_dataset,batch_size=64, shuffle=False)
     ###
     numClass = 2
     # default file : /root/.cache/torch/hub/checkpoints/resnet101-63fe2227.pth
-    res101 = models.resnet101(pretrained=True)
-    numFit = res101.fc.in_features
-    res101.fc = nn.Sequential(nn.Linear(numFit, numClass), nn.Softmax(dim=1))
-    res101 = res101.to(device)
+    model = resnet101(numClass)
+    # freeze encoder but leave fc still updated
+    for param in model.parameters():
+        param.requires_grad = False
+    for param in model.fc.parameters():
+        param.requires_grad = True
+    opt = optim.SGD(filter(lambda p : p.requires_grad, model.parameters()), lr=0.01, momentum=0.9)
+    loss = nn.BCELoss()
     ###
     y_pred, y_gt = [], []
     y_no, y_diab = [], []
     nor, dia = AverageMeter(), AverageMeter()
-    for index, (x, y) in enumerate(train_loader):
+    for e in range(5):
+        for index, (x,y) in enumerate(train_loader):
+            opt.zero_grad()
+            x, y = x.to(device), y.to(device)
+            y_hat = model(x)
+            losses = loss(y_hat, y)
+            losses.backward()
+            opt.step()
+    # test
+    for index, (x, y) in enumerate(test_loader):
         x, y = x.to(device), y.to(device)
         bsz = x.shape[0]
-        y_hat = res101(x)
+        y_hat = model(x)
         acc = accuracy(y_hat, y, topk=(1,))
         acc_all.update(acc[0].item(), bsz)
         #
