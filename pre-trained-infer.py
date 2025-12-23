@@ -19,7 +19,7 @@ def accuracy(output, target, topk=(1,)):
         res = []
         for k in topk:
             correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
-            print(batch_size)
+            #print(batch_size)
             res.append(correct_k.mul_(100.0 / batch_size))
     return res
 
@@ -77,14 +77,16 @@ if __name__ == "__main__":
         index_nor = torch.nonzero(y == 0)[:,0]
         index_dia = torch.nonzero(y == 1)[:,0]
         #
-        nor_element = y_hat[index_nor]
-        nor_gt = y[index_nor]
-        dia_element = y_hat[index_dia]
-        dia_gt = y[index_dia]
-        acc_nor = accuracy(nor_element, nor_gt, topk=(1,))
-        acc_dia = accuracy(dia_element, dia_gt, topk=(1,))
-        nor.update(acc_nor[0].item(), bsz)
-        dia.update(acc_dia[0].item(), bsz)
+        if len(index_nor) != 0:
+            nor_element = y_hat[index_nor]
+            nor_gt = y[index_nor]
+            acc_nor = accuracy(nor_element, nor_gt, topk=(1,))
+            nor.update(acc_nor[0].item(), bsz)
+        if len(index_dia) != 0:
+            dia_element = y_hat[index_dia]
+            dia_gt = y[index_dia]
+            acc_dia = accuracy(dia_element, dia_gt, topk=(1,))
+            dia.update(acc_dia[0].item(), bsz)
     #
     print(f'Overall acc is {acc_all.avg} normal acc is {nor.avg} diabetes acc is {dia.avg}')
     print(f'The predicted top of normal is {nor_element} ground truth is {nor_gt}')
