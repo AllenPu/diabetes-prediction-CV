@@ -59,7 +59,8 @@ def resnet101(numClass):
 
 
 class LAloss(nn.Module):
-    def __init__(self, cls_num_list, tau=1.0):
+    # 20 : [2087, 856]; 50 : [2620,323]
+    def __init__(self, cls_num_list=[], tau=1.0):
         super(LAloss, self).__init__()
 
         cls_probs = [cls_num / sum(cls_num_list) for cls_num in cls_num_list]
@@ -82,7 +83,7 @@ if __name__ == "__main__":
         transforms.ToTensor(),           # 将图像转换为张量
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # 标准化
         ])  
-    train_datasets = datasets.ImageFolder(root='/teams/dr_1765761962/program_data/binary_data_less_50', transform=transform)
+    train_datasets = datasets.ImageFolder(root='/teams/dr_1765761962/program_data/binary_data_less_20', transform=transform)
     #
     train_size = int(0.8 * len(train_datasets))
     test_size = len(train_datasets) - train_size
