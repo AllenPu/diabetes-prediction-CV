@@ -5,6 +5,8 @@ from torchvision import models
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
 import torch.optim as optim
+import torch.nn.functional as F
+import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -56,6 +58,20 @@ def resnet101(numClass):
     return res101
 
 
+class LAloss(nn.Module):
+    def __init__(self, cls_num_list, tau=1.0):
+        super(LAloss, self).__init__()
+
+        cls_probs = [cls_num / sum(cls_num_list) for cls_num in cls_num_list]
+        iota_list = tau * np.log(cls_probs)
+
+        self.iota_list = torch.cuda.FloatTensor(iota_list)
+
+    def forward(self, x, target):
+        #print(" x shape is {} taegt shape is {} iota is {}" .format(x.shape, target.shape, self.iota_list))
+        output = x + self.iota_list
+
+        return F.cross_entropy(output, target, reduction='sum')
 
     
 
@@ -66,7 +82,7 @@ if __name__ == "__main__":
         transforms.ToTensor(),           # 将图像转换为张量
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # 标准化
         ])  
-    train_datasets = datasets.ImageFolder(root='/teams/dr_1765761962/program_data/binary_data_less_20', transform=transform)
+    train_datasets = datasets.ImageFolder(root='/teams/dr_1765761962/program_data/binary_data_less_50', transform=transform)
     #
     train_size = int(0.8 * len(train_datasets))
     test_size = len(train_datasets) - train_size
@@ -111,12 +127,14 @@ if __name__ == "__main__":
             nor_element = y_hat[index_nor]
             nor_gt = y[index_nor]
             acc_nor = accuracy(nor_element, nor_gt, topk=(1,))
-            nor.update(acc_nor[0].item(), bsz)
+            bsz_nor = len(index_nor)
+            nor.update(acc_nor[0].item(), bsz_nor)
         if len(index_dia) != 0:
             dia_element = y_hat[index_dia]
             dia_gt = y[index_dia]
             acc_dia = accuracy(dia_element, dia_gt, topk=(1,))
-            dia.update(acc_dia[0].item(), bsz)
+            bsz_dia = len(index_dia)
+            dia.update(acc_dia[0].item(), bsz_dia)
     #
     print(f'Overall acc is {acc_all.avg} normal acc is {nor.avg} diabetes acc is {dia.avg}')
     print(f'The predicted top of normal is {nor_element} ground truth is {nor_gt}')
