@@ -57,6 +57,7 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4)
     ###
     numClass = 2
+    # default file : /root/.cache/torch/hub/checkpoints/resnet101-63fe2227.pth
     res101 = models.resnet101(pretrained=True)
     numFit = res101.fc.in_features
     res101.fc = nn.Sequential(nn.Linear(numFit, numClass), nn.Softmax(dim=1))
