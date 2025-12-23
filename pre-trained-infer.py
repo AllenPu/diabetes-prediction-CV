@@ -53,7 +53,7 @@ if __name__ == "__main__":
         transforms.ToTensor(),           # 将图像转换为张量
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # 标准化
         ])
-    train_dataset = datasets.ImageFolder(root='/teams/dr_1765761962/program_data/binary_data', transform=transform)
+    train_dataset = datasets.ImageFolder(root='/teams/dr_1765761962/program_data/binary_data_less_50', transform=transform)
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4)
     ###
     numClass = 2
