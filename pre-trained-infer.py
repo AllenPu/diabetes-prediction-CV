@@ -86,5 +86,5 @@ if __name__ == "__main__":
         dia.update(acc_dia[0].item(), bsz)
     #
     print(f'Overall acc is {acc_all.avg} normal acc is {nor.avg} diabetes acc is {dia.avg}')
-
+    print(f'The predicted top of normal is {nor_element} ground truth is {nor_gt}')
         
