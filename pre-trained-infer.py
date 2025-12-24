@@ -67,7 +67,8 @@ class LAloss(nn.Module):
             cls_num_list= [856,2087]
             #cls_num_list= [2087, 856]
         elif threshold == 50:
-            cls_num_list= [323,2620]    
+            #cls_num_list= [323,2620] 
+            cls_num_list= [2620, 323]   
         cls_probs = [cls_num / sum(cls_num_list) for cls_num in cls_num_list]
         iota_list = tau * np.log(cls_probs)
 
@@ -109,8 +110,8 @@ if __name__ == "__main__":
         param.requires_grad = True
     opt = optim.SGD(filter(lambda p : p.requires_grad, model.parameters()), lr=0.01, momentum=0.9)
     #
-    loss = nn.CrossEntropyLoss()
-    #loss = LAloss(threshold)
+    #loss = nn.CrossEntropyLoss()
+    loss = LAloss(threshold)
     ###
     y_pred, y_gt = [], []
     y_no, y_diab = [], []
