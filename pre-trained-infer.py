@@ -108,8 +108,8 @@ if __name__ == "__main__":
         param.requires_grad = True
     opt = optim.SGD(filter(lambda p : p.requires_grad, model.parameters()), lr=0.01, momentum=0.9)
     #
-    loss = nn.CrossEntropyLoss()
-    #loss = LAloss(threshold)
+    #loss = nn.CrossEntropyLoss()
+    loss = LAloss(threshold)
     ###
     y_pred, y_gt = [], []
     y_no, y_diab = [], []
