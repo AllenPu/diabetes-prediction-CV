@@ -100,7 +100,7 @@ if __name__ == "__main__":
     ###
     numClass = 2
     # default file : /root/.cache/torch/hub/checkpoints/resnet101-63fe2227.pth
-    model = resnet101(numClass)
+    model = resnet101(numClass).to(device)
     # freeze encoder but leave fc still updated
     for param in model.parameters():
         param.requires_grad = False
