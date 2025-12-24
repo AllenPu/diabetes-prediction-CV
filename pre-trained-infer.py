@@ -64,9 +64,9 @@ class LAloss(nn.Module):
     def __init__(self, threshold, cls_num_list=[], tau=1.0):
         super(LAloss, self).__init__()
         if threshold == 20:
-            cls_num_list= [2087, 856]
+            cls_num_list= [856,2087]
         elif threshold == 50:
-            cls_num_list= [2620,323]    
+            cls_num_list= [323,2620]    
         cls_probs = [cls_num / sum(cls_num_list) for cls_num in cls_num_list]
         iota_list = tau * np.log(cls_probs)
 
