@@ -123,28 +123,29 @@ if __name__ == "__main__":
             losses.backward()
             opt.step()
     # test
-    for index, (x, y) in enumerate(test_loader):
-        x, y = x.to(device), y.to(device)
-        bsz = x.shape[0]
-        y_hat = model(x)
-        acc = accuracy(y_hat, y, topk=(1,))
-        acc_all.update(acc[0].item(), bsz)
-        #
-        index_nor = torch.nonzero(y == 0)[:,0]
-        index_dia = torch.nonzero(y == 1)[:,0]
-        #
-        if len(index_nor) != 0:
-            nor_element = y_hat[index_nor]
-            nor_gt = y[index_nor]
-            acc_nor = accuracy(nor_element, nor_gt, topk=(1,))
-            bsz_nor = len(index_nor)
-            nor.update(acc_nor[0].item(), bsz_nor)
-        if len(index_dia) != 0:
-            dia_element = y_hat[index_dia]
-            dia_gt = y[index_dia]
-            acc_dia = accuracy(dia_element, dia_gt, topk=(1,))
-            bsz_dia = len(index_dia)
-            dia.update(acc_dia[0].item(), bsz_dia)
+    with torch.no_grad():
+        for index, (x, y) in enumerate(test_loader):
+            x, y = x.to(device), y.to(device)
+            bsz = x.shape[0]
+            y_hat = model(x)
+            acc = accuracy(y_hat, y, topk=(1,))
+            acc_all.update(acc[0].item(), bsz)
+            #
+            index_nor = torch.nonzero(y == 0)[:,0]
+            index_dia = torch.nonzero(y == 1)[:,0]
+            #
+            if len(index_nor) != 0:
+                nor_element = y_hat[index_nor]
+                nor_gt = y[index_nor]
+                acc_nor = accuracy(nor_element, nor_gt, topk=(1,))
+                bsz_nor = len(index_nor)
+                nor.update(acc_nor[0].item(), bsz_nor)
+            if len(index_dia) != 0:
+                dia_element = y_hat[index_dia]
+                dia_gt = y[index_dia]
+                acc_dia = accuracy(dia_element, dia_gt, topk=(1,))
+                bsz_dia = len(index_dia)
+                dia.update(acc_dia[0].item(), bsz_dia)
     #
     print(f'Overall acc is {acc_all.avg} normal acc is {nor.avg} diabetes acc is {dia.avg}')
     print(f'The predicted top of normal is {nor_element} ground truth is {nor_gt}')
