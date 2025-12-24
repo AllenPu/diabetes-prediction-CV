@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
+from tqdm import tqdm
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -59,10 +60,13 @@ def resnet101(numClass):
 
 
 class LAloss(nn.Module):
-    # 20 : [2087, 856]; 50 : [2620,323]
-    def __init__(self, cls_num_list=[], tau=1.0):
+    # threshold 20 : [2087, 856]; 50 : [2620,323]
+    def __init__(self, threshold, cls_num_list=[], tau=1.0):
         super(LAloss, self).__init__()
-
+        if threshold == 20:
+            cls_num_list= [2087, 856]
+        elif threshold == 50:
+            cls_num_list= [2620,323]    
         cls_probs = [cls_num / sum(cls_num_list) for cls_num in cls_num_list]
         iota_list = tau * np.log(cls_probs)
 
@@ -77,13 +81,16 @@ class LAloss(nn.Module):
     
 
 if __name__ == "__main__":
+    #
+    threshold = 20
+    #
     acc_all = AverageMeter()
     transform = transforms.Compose([
         transforms.Resize((224, 224)),  # 调整图像大小
         transforms.ToTensor(),           # 将图像转换为张量
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # 标准化
         ])  
-    train_datasets = datasets.ImageFolder(root='/teams/dr_1765761962/program_data/binary_data_less_20', transform=transform)
+    train_datasets = datasets.ImageFolder(root=f'/teams/dr_1765761962/program_data/binary_data_less_{threshold}', transform=transform)
     #
     train_size = int(0.8 * len(train_datasets))
     test_size = len(train_datasets) - train_size
@@ -100,12 +107,14 @@ if __name__ == "__main__":
     for param in model.fc.parameters():
         param.requires_grad = True
     opt = optim.SGD(filter(lambda p : p.requires_grad, model.parameters()), lr=0.01, momentum=0.9)
-    loss = nn.CrossEntropyLoss()
+    #
+    #loss = nn.CrossEntropyLoss()
+    loss = LAloss(threshold)
     ###
     y_pred, y_gt = [], []
     y_no, y_diab = [], []
     nor, dia = AverageMeter(), AverageMeter()
-    for e in range(5):
+    for e in tqdm(range(5)):
         for index, (x,y) in enumerate(train_loader):
             opt.zero_grad()
             x, y = x.to(device), y.to(device)
